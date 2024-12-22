@@ -1,0 +1,12 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<div style="max-width: 600px; margin: auto; background: #333; color: #fff; padding: 20px; border-radius: 8px;">
+  <h1 style="text-align: center;">Importar Revistas y Artículos</h1>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="file" name="file" accept=".csv" style="margin-top: 15px; margin-bottom: 15px;" required />
+    <button type="submit" style="background-color: #1976d2; color: #fff; padding: 10px 20px; border: none; border-radius: 5px;">Importar</button>
+  </form>
+  <a href="{% url 'admin:index' %}" style="text-decoration: none; color: #fff; display: block; margin-top: 20px; text-align: center;">Volver</a>
+</div>
+{% endblock %}
