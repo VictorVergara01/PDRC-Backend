@@ -8,3 +8,5 @@ staticfiles/
 media/
 *.sqlite3
 .idea/
+env/
+venv/
