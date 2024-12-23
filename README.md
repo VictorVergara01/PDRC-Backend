@@ -57,26 +57,194 @@ source env/bin/activate
 pip install -r requirements.txt
 ```
 
-### 7. Instalar MySQL Server
+# Instalación y Configuración de MySQL para Conexiones Remotas en Ubuntu
+
+Esta guía detalla los pasos para instalar y configurar MySQL en un servidor Ubuntu, habilitar conexiones remotas y crear un usuario y una base de datos específicos.
+
+---
+
+## 1. Actualizar el Sistema
+Antes de comenzar, actualiza tu sistema:
+
 ```bash
-sudo apt install mysql-server
+sudo apt update && sudo apt upgrade -y
+```
+
+---
+
+## 2. Instalar MySQL
+Ejecuta el siguiente comando para instalar MySQL Server:
+
+```bash
+sudo apt install mysql-server -y
+```
+
+Esto instalará MySQL y lo configurará para iniciarse automáticamente.
+
+---
+
+## 3. Asegurar la Instalación de MySQL
+Ejecuta el script de configuración de seguridad:
+
+```bash
 sudo mysql_secure_installation
 ```
 
-### 8. Configurar la base de datos
-Accede a MySQL:
+Durante el proceso:
+- Configura una contraseña para el usuario `root`.
+- Elimina usuarios anónimos.
+- Deshabilita el acceso remoto del usuario `root` (recomendado).
+- Elimina la base de datos de prueba.
+- Recarga las tablas de privilegios.
+
+---
+
+## 4. Configurar MySQL para Conexiones Remotas
+
+1. **Edita el archivo de configuración de MySQL:**
+
+   ```bash
+   sudo nano /etc/mysql/mysql.conf.d/mysqld.cnf
+   ```
+
+2. **Modifica la línea `bind-address`:**
+
+   Cambia:
+   ```plaintext
+   bind-address = 127.0.0.1
+   ```
+   Por:
+   ```plaintext
+   bind-address = 0.0.0.0
+   ```
+
+3. **Guarda y reinicia el servicio MySQL:**
+
+   ```bash
+   sudo systemctl restart mysql
+   ```
+
+---
+
+## 5. Crear Usuario y Base de Datos
+
+1. **Accede a MySQL:**
+
+   ```bash
+   sudo mysql -u root -p
+   ```
+
+2. **Crea una base de datos:**
+
+   ```sql
+   CREATE DATABASE revistas_db;
+   ```
+
+3. **Crea un usuario remoto:**
+
+   ```sql
+   CREATE USER 'revista'@'%' IDENTIFIED BY 'ContrasenaSegura';
+   ```
+
+4. **Otorga permisos al usuario:**
+
+   ```sql
+   GRANT ALL PRIVILEGES ON revistas_db.* TO 'revista'@'%';
+   FLUSH PRIVILEGES;
+   ```
+
+5. **Sal de MySQL:**
+
+   ```sql
+   EXIT;
+   ```
+
+---
+
+## 6. Configurar el Firewall
+
+1. **Permite el puerto 3306 en el firewall:**
+
+   ```bash
+   sudo ufw allow 3306
+   sudo ufw reload
+   ```
+
+2. **Verifica que MySQL está escuchando en el puerto 3306:**
+
+   ```bash
+   sudo netstat -tuln | grep 3306
+   ```
+
+   Deberías ver algo como:
+   ```plaintext
+   tcp        0      0 0.0.0.0:3306           0.0.0.0:*             LISTEN
+   ```
+
+---
+
+## 7. Probar la Conexión Remota
+
+1. **Desde una máquina remota, instala el cliente MySQL si no está instalado:**
+
+   ```bash
+   sudo apt install mysql-client -y
+   ```
+
+2. **Conéctate al servidor MySQL:**
+
+   ```bash
+   mysql -h <IP_DEL_SERVIDOR> -P 3306 -u revista -p
+   ```
+
+   Reemplaza `<IP_DEL_SERVIDOR>` con la IP del servidor donde está instalado MySQL.
+
+---
+
+## Resumen de Comandos
+
+### **Instalación y Configuración**
 ```bash
-sudo mysql -u root -p
+sudo apt update && sudo apt upgrade -y
+sudo apt install mysql-server -y
+sudo mysql_secure_installation
+sudo nano /etc/mysql/mysql.conf.d/mysqld.cnf
+sudo systemctl restart mysql
 ```
 
-Ejecuta los siguientes comandos para crear la base de datos y el usuario:
+### **Base de Datos y Usuario**
 ```sql
 CREATE DATABASE revistas_db;
-CREATE USER 'revista'@'localhost' IDENTIFIED BY '123qweASD';
-GRANT ALL PRIVILEGES ON revistas_db.* TO 'revista'@'localhost';
+CREATE USER 'revista'@'%' IDENTIFIED BY 'ContrasenaSegura';
+GRANT ALL PRIVILEGES ON revistas_db.* TO 'revista'@'%';
 FLUSH PRIVILEGES;
-exit
 ```
+
+### **Firewall**
+```bash
+sudo ufw allow 3306
+sudo ufw reload
+```
+
+### **Prueba de Conexión**
+```bash
+mysql -h <IP_DEL_SERVIDOR> -P 3306 -u revista -p
+```
+
+---
+
+## Consideraciones de Seguridad
+
+- **Contraseñas seguras:** Usa contraseñas fuertes para los usuarios de MySQL.
+- **Restringir accesos:** Si es posible, limita las conexiones remotas a rangos de IP específicos:
+  ```sql
+  CREATE USER 'revista'@'192.168.1.%' IDENTIFIED BY 'ContrasenaSegura';
+  GRANT ALL PRIVILEGES ON revistas_db.* TO 'revista'@'192.168.1.%';
+  FLUSH PRIVILEGES;
+  ```
+- **TLS:** Configura conexiones encriptadas para mayor seguridad.
+
+---
 
 ### 9. Realizar las migraciones de la base de datos
 ```bash
